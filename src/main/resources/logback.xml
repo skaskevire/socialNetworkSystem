@@ -8,7 +8,7 @@
 		</layout>
 	</appender>
 
-	<logger name="quote.Controller" level="info"
+	<logger name="sns.Controller" level="info"
 		additivity="true">
 		<appender-ref ref="STDOUT" />
 	</logger>
