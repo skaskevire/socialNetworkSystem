@@ -1,7 +1,8 @@
 package sns.resource.rest;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.camel.Exchange;
 import org.springframework.stereotype.Component;
@@ -13,13 +14,19 @@ import sns.dao.entity.User;
 public class UserMessageAggregator{
 	public void aggregate(Exchange exchange)
 	{
+		@SuppressWarnings("unchecked")
 		List<User> users = ((List<User>)exchange.getIn().getBody());
-		List<Message> messages = new ArrayList<Message>();
+		Set<Message> messages = new TreeSet<Message>();
 		for(User user: users)
 		{
 			if(user.getMessages() != null)
 			{
-				messages.addAll(user.getMessages());
+				for(Message msg : user.getMessages())
+				{
+					msg.setUser(user.getName());
+					messages.add(msg);
+				}
+				
 			}
 		}
 		exchange.getOut().setBody(messages);

@@ -20,7 +20,8 @@ public class UserRouter extends RouteBuilder{
 	rest("/users")
 		.post("/add").type(User.class).outType(String.class)
 			.to("direct:addUser")
-		.get("/find").to("direct:findUser");
+		.get("/find").to("direct:findUser")
+		.get("/generate/{numberOfUsers}").to("bean:userService?method=generateUsersAndRelations");
 	rest("/users/{username}/friends")
 		.post("/add/{targetUser}")
 			.to("direct:addToFriends")
@@ -30,14 +31,14 @@ public class UserRouter extends RouteBuilder{
 			.to("bean:userService?method=distanceFactor");
 	rest("/users/{username}/friends/invitations")
 		.get("/get").to("bean:userService?method=getInvitations")
-		.post("/accept").to("direct:acceptInvitation");
+		.post("/accept/{requestor}").to("direct:acceptInvitation");
 	rest("/users/{username}/friends/explore")
 		.get("/users").to("bean:userService?method=exploreUsers")
 		.get("/network").to("bean:userService?method=exploreNetwork");	
 	rest("/users/{username}/messages")
 		.post("/post").to("direct:update")
-		.get("/friends").to("direct:retrieveDeepUserData")
-		.get("/network").to("direct:retrieveDeepNetworkUserData");
+		.get("/friends").to("direct:retrieveSpecifyingUserData")
+		.get("/network").to("direct:retrieveSpecifyingNetworkUserData");
 	
 	from("direct:addToFriends")
 		.to("bean:userService?method=addToFriends")
@@ -56,11 +57,11 @@ public class UserRouter extends RouteBuilder{
 		.to("direct:emptyResponse");
 	from("direct:update").to("bean:userService?method=postMessage")
 		.to("direct:emptyResponse");	
-	from("direct:retrieveDeepUserData")
+	from("direct:retrieveSpecifyingUserData")
 		.to("bean:userService?method=exploreUsers")
 		.to("bean:userService?method=getUsers")
 		.to("bean:userMessageAggregator");	
-	from("direct:retrieveDeepNetworkUserData")
+	from("direct:retrieveSpecifyingNetworkUserData")
 		.to("bean:userService?method=exploreNetwork")
 		.to("bean:userService?method=getUsers")
 		.to("bean:userMessageAggregator");	

@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import sns.dao.entity.User;
 
 public interface UserRepository extends Neo4jRepository<User, Long> {
-	@Query("MATCH (a:User),(b:User) WHERE a.name = {sourceUser} AND b.name = {targetUser} CREATE (a)-[r:FRIENDSHIP_REQUESTED]->(b)")
+	@Query("MATCH (a:User),(b:User) WHERE a.name = {sourceUser} AND b.name = {targetUser} AND NOT a.name = b.name AND NOT (a)-[:FRIEND]->(b) MERGE (a)-[r:FRIENDSHIP_REQUESTED]->(b)")
 	public void addUserToFriend(@Param("sourceUser") String sourceUser, @Param("targetUser") String targetUser);
 
 	@Query("MATCH (a:User),(b:User) WHERE a.name = {user} AND (a)<-[:FRIENDSHIP_REQUESTED]-(b) RETURN b.name")

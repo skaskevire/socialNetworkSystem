@@ -59,11 +59,12 @@ public class MongoUserDao {
 	
 	public List<User> find(String usernamePattern, String bdateRangeFloor, String bdateRangeCeiling, String city) throws ParseException
 	{
+		List<User> users = null;
 		SimpleDateFormat dateformat = new SimpleDateFormat("MM.dd.yyyy");
 		List<Criteria> criterias = new ArrayList<>();
 		if(usernamePattern != null && !usernamePattern.isEmpty())
 		{
-			criterias.add(Criteria.where("name").regex("/"+usernamePattern+"/"));
+			criterias.add(Criteria.where("name").regex(usernamePattern));
 		}
 		if(city != null && !city.isEmpty())
 		{
@@ -78,8 +79,12 @@ public class MongoUserDao {
 			criterias.add(Criteria.where("bdate").lt(dateformat.parse(bdateRangeCeiling)));
 		}
 		Query query = new Query();
-		query.addCriteria(new Criteria().andOperator((Criteria[]) criterias.toArray(new Criteria[criterias.size()])));
-		return mongoOperations.find(query, User.class);
-		
+		if(criterias.size() > 0)
+		{
+			query.addCriteria(new Criteria().andOperator((Criteria[]) criterias.toArray(new Criteria[criterias.size()])));
+			users = mongoOperations.find(query, User.class);
+		}
+
+		return users;
 	}
 }
