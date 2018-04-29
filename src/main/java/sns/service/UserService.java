@@ -39,7 +39,7 @@ public class UserService {
 			user.setName("Name" + i + UUID.randomUUID().toString());
 			users.add(user);
 			
-			neo4jUserDao.saveUser(user);
+			//neo4jUserDao.saveUser(user);
 			mongoUserDao.saveUser(user);
 			
 
@@ -62,7 +62,7 @@ public class UserService {
 			
 		}
 		
-		for(int i = 0; i< n*5; i++)
+		/*for(int i = 0; i< n*5; i++)
 		{
 			int nnn = r.nextInt(n-2);
 
@@ -73,11 +73,11 @@ public class UserService {
 			msg.setMessage(UUID.randomUUID().toString());
 
 			mongoUserDao.postMessage(user1.getName(), msg);
-		}
+		}*/
 	}
 	public void save(Exchange exchange) {
 		User user = exchange.getIn().getBody(User.class);
-		neo4jUserDao.saveUser(user);
+		//neo4jUserDao.saveUser(user);
 		mongoUserDao.saveUser(user);
 	}
 
