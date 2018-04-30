@@ -16,6 +16,7 @@ import sns.dao.entity.Message;
 import sns.dao.entity.User;
 import sns.dao.mongo.MongoUserDao;
 import sns.dao.neo4j.Neo4jUserDao;
+import sns.exception.BusinessException;
 
 @Component
 public class UserService {
@@ -23,26 +24,21 @@ public class UserService {
 	Neo4jUserDao neo4jUserDao;
 	@Autowired
 	MongoUserDao mongoUserDao;
-	
-	
-	
-	public void generateUsersAndRelations(Exchange exchange)
-	{
-		Integer n = Integer.valueOf(getFieldFromExchangeHeader(exchange, "numberOfUsers"))+5;
+
+	public void generateUsersAndRelations(Exchange exchange) {
+		Integer n = Integer.valueOf(getFieldFromExchangeHeader(exchange, "numberOfUsers")) + 5;
 		System.out.println("Start!");
 		List<User> users = new ArrayList<User>();
 		Random r = new Random();
-		for(int i = 0; i< n; i++)
-		{
+		for (int i = 0; i < n; i++) {
 			User user = new User();
 			user.setBdate(new Date());
-			user.setCity("City"+ r.nextInt(1000));
+			user.setCity("City" + r.nextInt(1000));
 			user.setName("Name" + i + UUID.randomUUID().toString());
 			users.add(user);
-			
-			//neo4jUserDao.saveUser(user);
+
+			// neo4jUserDao.saveUser(user);
 			mongoUserDao.saveUser(user);
-			
 
 			try {
 				Thread.sleep(1l);
@@ -50,29 +46,27 @@ public class UserService {
 				e.printStackTrace();
 			}
 		}
-		
+
 		try {
 			Thread.sleep(10000l);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		for(int i = 0; i< n*2; i++)
-		{
-			int firstUserIndex = r.nextInt(n-2);
-			int secondUserIndex = r.nextInt(n-2);
+		for (int i = 0; i < n * 2; i++) {
+			int firstUserIndex = r.nextInt(n - 2);
+			int secondUserIndex = r.nextInt(n - 2);
 			User user1 = users.get(firstUserIndex);
 			User user2 = users.get(secondUserIndex);
 			neo4jUserDao.addFriendshipRequestedRelation(user1.getName(), user2.getName());
 			neo4jUserDao.acceptInvitation(user2.getName(), user1.getName());
-			
+
 		}
-		
-		for(int i = 0; i< n*5; i++)
-		{
-			int nnn = r.nextInt(n-2);
+
+		for (int i = 0; i < n * 5; i++) {
+			int nnn = r.nextInt(n - 2);
 
 			User user1 = users.get(nnn);
-			
+
 			Message msg = new Message();
 			msg.setDate(new Date());
 			msg.setMessage(UUID.randomUUID().toString());
@@ -80,9 +74,10 @@ public class UserService {
 			mongoUserDao.postMessage(user1.getName(), msg);
 		}
 	}
+
 	public void save(Exchange exchange) {
 		User user = exchange.getIn().getBody(User.class);
-		//neo4jUserDao.saveUser(user);
+		// neo4jUserDao.saveUser(user);
 		mongoUserDao.saveUser(user);
 	}
 
@@ -96,8 +91,11 @@ public class UserService {
 	}
 
 	public void addToFriends(Exchange exchange) {
-		neo4jUserDao.addFriendshipRequestedRelation(getFieldFromExchangeHeader(exchange, "username"),
-				getFieldFromExchangeHeader(exchange, "targetUser"));
+		Integer responseCode = neo4jUserDao.addFriendshipRequestedRelation(
+				getFieldFromExchangeHeader(exchange, "username"), getFieldFromExchangeHeader(exchange, "targetUser"));
+		if (responseCode == null) {
+			throw new BusinessException("AddFriend operation failed: Invalid arguments");
+		}
 	}
 
 	public List<String> getInvitations(Exchange exchange) {
@@ -105,16 +103,19 @@ public class UserService {
 	}
 
 	public void acceptInvitation(Exchange exchange) {
-		neo4jUserDao.acceptInvitation(getFieldFromExchangeHeader(exchange, "username"),
+		Integer responseCode = neo4jUserDao.acceptInvitation(getFieldFromExchangeHeader(exchange, "username"),
 				getFieldFromExchangeHeader(exchange, "requestor"));
+		if (responseCode == null) {
+			throw new BusinessException("Accept operation failed: Invalid arguments");
+		}
+
 	}
 
 	public List<String> exploreUsers(Exchange exchange) {
 		return neo4jUserDao.getNearestNodes(getFieldFromExchangeHeader(exchange, "username"));
 	}
-	
-	public List<Message> getAllFriendMessages(Exchange exchange)
-	{
+
+	public List<Message> getAllFriendMessages(Exchange exchange) {
 		return mongoUserDao.getUserMessages(exploreUsers(exchange));
 	}
 
@@ -123,13 +124,22 @@ public class UserService {
 	}
 
 	public void removeFriend(Exchange exchange) {
-		neo4jUserDao.removeFriendRelation(getFieldFromExchangeHeader(exchange, "username"),
+		List<Integer> responseCodes = neo4jUserDao.removeFriendRelation(getFieldFromExchangeHeader(exchange, "username"),
 				getFieldFromExchangeHeader(exchange, "friendToRemove"));
+		if (responseCodes == null || responseCodes.size() != 2) {
+			throw new BusinessException(
+					"RemoveUser operation failed");
+		}
 	}
 
 	public int distanceFactor(Exchange exchange) {
-		return neo4jUserDao.distanceFactor(getFieldFromExchangeHeader(exchange, "username"),
+		Integer distanceFactor = neo4jUserDao.distanceFactor(getFieldFromExchangeHeader(exchange, "username"),
 				getFieldFromExchangeHeader(exchange, "targetUser"));
+		if (distanceFactor == null) {
+			throw new BusinessException("DistanceFactor operation failed: sourceUser or targetUser name incorrect");
+		}
+
+		return distanceFactor;
 	}
 
 	public void postMessage(Exchange exchange) {

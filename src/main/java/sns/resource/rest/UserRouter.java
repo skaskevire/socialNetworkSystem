@@ -9,21 +9,20 @@ import sns.dao.entity.User;
 
 @Component
 public class UserRouter extends RouteBuilder{
-
 	@Override
 	public void configure() throws Exception {
 		restConfiguration()
 		.component("servlet")
 		.contextPath("/")
 		.bindingMode(RestBindingMode.json);
-	
+	onException(Exception.class).handled(true).to("bean:exceptionProcessor");
 	rest("/users")
 		.post("/add").type(User.class).outType(String.class)
 			.to("direct:addUser")
 		.get("/find").to("direct:findUser")
 		.get("/generate/{numberOfUsers}").to("bean:userService?method=generateUsersAndRelations");
 	rest("/users/{username}/friends")
-		.post("/add/{targetUser}")
+		.post("/add/{targetUser}")//
 			.to("direct:addToFriends")
 		.delete("/remove/{friendToRemove}")
 			.to("direct:removeFriend")
@@ -48,7 +47,7 @@ public class UserRouter extends RouteBuilder{
 		.to("direct:emptyResponse");
 	from("direct:addUser")
 		.to("bean:userService?method=save")
-		.to("direct:emptyResponse");		
+		.to("direct:emptyResponse");
 	from("direct:findUser")
 		.to("bean:userService?method=filterUsers")
 		.to("mock:endFind");
@@ -64,6 +63,8 @@ public class UserRouter extends RouteBuilder{
 		.to("bean:userService?method=exploreNetwork")
 		.to("bean:userService?method=getUsers")
 		.to("bean:userMessageAggregator");	
-	from("direct:emptyResponse").setBody().constant("");	
+	from("direct:emptyResponse").setBody().constant("");
+	
+	
 	}
 }

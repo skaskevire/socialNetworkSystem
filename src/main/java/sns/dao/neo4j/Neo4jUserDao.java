@@ -16,8 +16,8 @@ public class Neo4jUserDao {
 		repository.createOrUpdate(user.getName());
 	}
 
-	public void addFriendshipRequestedRelation(String sourceUser, String targetUser) {
-		repository.addUserToFriend(sourceUser, targetUser);
+	public Integer addFriendshipRequestedRelation(String sourceUser, String targetUser) {
+		return repository.addUserToFriend(sourceUser, targetUser);
 	}
 
 	public List<String> getIncomingFriendshipRequestedRelations(String user)
@@ -25,9 +25,9 @@ public class Neo4jUserDao {
 		return repository.getIncomingFriendshipRequestedRelations(user);
 	}
 
-	public void acceptInvitation(String acceptor, String requestor)
+	public Integer acceptInvitation(String acceptor, String requestor)
 	{
-		repository.acceptFrienship(acceptor, requestor);
+		return repository.acceptFrienship(acceptor, requestor);
 	}
 	
 	public List<String> getNearestNodes(String currentNode)
@@ -40,12 +40,12 @@ public class Neo4jUserDao {
 		return repository.exploreNetwork(username);		
 	}
 	
-	public void removeFriendRelation(String sourceNode, String targetNode)
+	public List<Integer> removeFriendRelation(String sourceNode, String targetNode)
 	{
-		repository.removeFriendRelation(sourceNode, targetNode);
+		return repository.removeFriendRelation(sourceNode, targetNode);
 	}
 	
-	public int distanceFactor(String sourceNode, String targetNode)
+	public Integer distanceFactor(String sourceNode, String targetNode)
 	{
 		return repository.distanceFactor(sourceNode, targetNode);
 	}
