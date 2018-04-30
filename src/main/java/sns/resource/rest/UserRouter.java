@@ -58,9 +58,8 @@ public class UserRouter extends RouteBuilder{
 	from("direct:update").to("bean:userService?method=postMessage")
 		.to("direct:emptyResponse");	
 	from("direct:retrieveSpecifyingUserData")
-		.to("bean:userService?method=exploreUsers")
-		.to("bean:userService?method=getUsers")
-		.to("bean:userMessageAggregator");	
+		.to("bean:userService?method=getAllFriendMessages");
+
 	from("direct:retrieveSpecifyingNetworkUserData")
 		.to("bean:userService?method=exploreNetwork")
 		.to("bean:userService?method=getUsers")

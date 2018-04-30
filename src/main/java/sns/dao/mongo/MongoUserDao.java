@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import sns.dao.entity.Message;
@@ -28,12 +28,27 @@ public class MongoUserDao {
 	
 	public void postMessage(String username, Message message)
 	{
+		message.setUser(username);
+		mongoOperations.save(message);
+	}
+	
+	public List<Message> getUserMessages(List<String> usernames)
+	{
 		Query query = new Query();
-		query.addCriteria(Criteria.where("name").is(username));
-		Update u = new Update();
-		u.addToSet("messages", message);
-
-		mongoOperations.updateFirst(query,u , User.class);
+		List<Message> messages = null;
+		List<Criteria> criterias = new ArrayList<>();
+		
+		for(String username: usernames)
+		{
+			criterias.add(Criteria.where("user").is(username));
+		}
+		if(criterias.size() > 0)
+		{
+			query.addCriteria(new Criteria().orOperator((Criteria[]) criterias.toArray(new Criteria[criterias.size()]))).with(new Sort(Sort.Direction.ASC, "date"));
+			messages = mongoOperations.find(query, Message.class);
+		}
+		
+		return messages;
 	}
 	
 	

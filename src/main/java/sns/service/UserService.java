@@ -31,11 +31,12 @@ public class UserService {
 		Integer n = Integer.valueOf(getFieldFromExchangeHeader(exchange, "numberOfUsers"))+5;
 		System.out.println("Start!");
 		List<User> users = new ArrayList<User>();
+		Random r = new Random();
 		for(int i = 0; i< n; i++)
 		{
 			User user = new User();
 			user.setBdate(new Date());
-			user.setCity("City1");
+			user.setCity("City"+ r.nextInt(1000));
 			user.setName("Name" + i + UUID.randomUUID().toString());
 			users.add(user);
 			
@@ -50,8 +51,12 @@ public class UserService {
 			}
 		}
 		
-		Random r = new Random();
-		for(int i = 0; i< n*10; i++)
+		try {
+			Thread.sleep(10000l);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		for(int i = 0; i< n*2; i++)
 		{
 			int firstUserIndex = r.nextInt(n-2);
 			int secondUserIndex = r.nextInt(n-2);
@@ -62,7 +67,7 @@ public class UserService {
 			
 		}
 		
-		/*for(int i = 0; i< n*5; i++)
+		for(int i = 0; i< n*5; i++)
 		{
 			int nnn = r.nextInt(n-2);
 
@@ -73,7 +78,7 @@ public class UserService {
 			msg.setMessage(UUID.randomUUID().toString());
 
 			mongoUserDao.postMessage(user1.getName(), msg);
-		}*/
+		}
 	}
 	public void save(Exchange exchange) {
 		User user = exchange.getIn().getBody(User.class);
@@ -106,6 +111,11 @@ public class UserService {
 
 	public List<String> exploreUsers(Exchange exchange) {
 		return neo4jUserDao.getNearestNodes(getFieldFromExchangeHeader(exchange, "username"));
+	}
+	
+	public List<Message> getAllFriendMessages(Exchange exchange)
+	{
+		return mongoUserDao.getUserMessages(exploreUsers(exchange));
 	}
 
 	public List<String> exploreNetwork(Exchange exchange) {

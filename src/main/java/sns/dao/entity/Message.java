@@ -2,10 +2,17 @@ package sns.dao.entity;
 
 import java.util.Date;
 
+import javax.persistence.GeneratedValue;
+
+import org.springframework.data.annotation.Id;
+
 public class Message implements Comparable<Message>{
 	private Date date;
 	private String message;
 	private String user;
+	@Id
+	@GeneratedValue
+	String id;
 
 	public String getUser() {
 		return user;

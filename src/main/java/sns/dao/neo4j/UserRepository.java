@@ -34,5 +34,4 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
 	@Query("MATCH (u:user { name: {username} }),(v:user { name: {targetuser} }), p = shortestPath((u)-[:FRIEND*]-(v))\r\n" + 
 			"RETURN length(p)")
 	public int distanceFactor(@Param("username")String username, @Param("targetuser")String targetuser);
-	
 }
