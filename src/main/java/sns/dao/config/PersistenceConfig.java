@@ -16,7 +16,7 @@ import com.mongodb.MongoClient;
 @EnableTransactionManagement
 @ComponentScan("sns.dao")
 @EnableNeo4jRepositories("sns.dao")
-public class PersistenceContextConfig {
+public class PersistenceConfig {
 
   @Bean
   public SessionFactory getSessionFactory() {
