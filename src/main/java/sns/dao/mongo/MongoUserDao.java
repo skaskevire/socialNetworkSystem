@@ -25,6 +25,12 @@ public class MongoUserDao {
 		mongoOperations.save(user);
 	}
 	
+	public void removeUser(String username)
+	{
+		Query query = new Query();
+		query.addCriteria(Criteria.where("name").is(username));
+		mongoOperations.remove(query, User.class);
+	}	
 	
 	public void postMessage(String username, Message message)
 	{
@@ -61,12 +67,18 @@ public class MongoUserDao {
 	
 	public List<User> getUsers(List<String> usernameList)
 	{
+		Query query = new Query();
 		List<User> users = new ArrayList<>();
-		for(String username : usernameList)
+		List<Criteria> criterias = new ArrayList<>();
+		
+		for(String username: usernameList)
 		{
-			Query query = new Query();
-			query.addCriteria(Criteria.where("name").is(username));
-			users.add(mongoOperations.findOne(query, User.class));
+			criterias.add(Criteria.where("name").is(username));
+		}
+		if(criterias.size() > 0)
+		{
+			query.addCriteria(new Criteria().orOperator((Criteria[]) criterias.toArray(new Criteria[criterias.size()]))).with(new Sort(Sort.Direction.ASC, "name"));
+			users = mongoOperations.find(query, User.class);
 		}
 
 		return users;
@@ -101,5 +113,11 @@ public class MongoUserDao {
 		}
 
 		return users;
+	}
+	
+	public Long count()
+	{
+		  Query query = new Query();   
+		  return mongoOperations.count(query, User.class);
 	}
 }

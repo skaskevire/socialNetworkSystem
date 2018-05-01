@@ -2,12 +2,15 @@ package sns.exception;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import sns.exception.HttpFailureResponse.FailureType;
 
 @Component
 public class ExceptionProcessor implements Processor {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionProcessor.class);
 	private static final int CODE_TECHNICAL_EX = 2000;
 	private static final int CODE_BUSINESS_EX = 1000;
 	private static final int CODE_UNKNOWN_EX = 2000;
@@ -25,10 +28,12 @@ public class ExceptionProcessor implements Processor {
 				response = new HttpFailureResponse(CODE_TECHNICAL_EX, exception.getMessage(),
 						exception.getClass().toString(), FailureType.Technical);
 			}
+			LOGGER.error(exception.getMessage(), exception);
 		} else {
 			response = new HttpFailureResponse(CODE_UNKNOWN_EX, "Unknown error", null, FailureType.Technical);
+			LOGGER.error("Unknown error");
 		}
-
+		
 		arg0.getOut().setBody(response);
 	}
 

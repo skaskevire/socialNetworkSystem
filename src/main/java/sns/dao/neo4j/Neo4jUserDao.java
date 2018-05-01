@@ -49,4 +49,9 @@ public class Neo4jUserDao {
 	{
 		return repository.distanceFactor(sourceNode, targetNode);
 	}
+	
+	public Long userCount()
+	{
+		return repository.userCount();
+	}
 }

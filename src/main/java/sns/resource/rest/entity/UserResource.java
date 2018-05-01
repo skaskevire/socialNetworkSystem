@@ -1,17 +1,17 @@
-package sns.dao.entity;
+package sns.resource.rest.entity;
 
 import java.util.Date;
-import javax.persistence.GeneratedValue;
 
-import org.neo4j.ogm.annotation.NodeEntity;
-import org.springframework.data.annotation.Id;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@NodeEntity
-public class User {
-	@Id
-	@GeneratedValue
-	private String id;
+import sns.resource.rest.DateDeserializer;
+import sns.resource.rest.DateSerializer;
+
+public class UserResource {
 	private String name;
+	@JsonDeserialize(using = DateDeserializer.class)
+	@JsonSerialize(using = DateSerializer.class)
 	private Date bdate;
 	private String city;
 
@@ -37,13 +37,5 @@ public class User {
 
 	public void setCity(String city) {
 		this.city = city;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
 	}
 }

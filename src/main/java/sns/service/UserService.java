@@ -5,80 +5,48 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 
 import org.apache.camel.Exchange;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import org.springframework.stereotype.Component;
 
+import sns.converter.Converter;
 import sns.dao.entity.Message;
 import sns.dao.entity.User;
 import sns.dao.mongo.MongoUserDao;
 import sns.dao.neo4j.Neo4jUserDao;
 import sns.exception.BusinessException;
+import sns.resource.rest.entity.MessageResource;
+import sns.resource.rest.entity.UserResource;
 
 @Component
 public class UserService {
 	@Autowired
-	Neo4jUserDao neo4jUserDao;
+	private Neo4jUserDao neo4jUserDao;
 	@Autowired
-	MongoUserDao mongoUserDao;
-
-	public void generateUsersAndRelations(Exchange exchange) {
-		Integer n = Integer.valueOf(getFieldFromExchangeHeader(exchange, "numberOfUsers")) + 5;
-		System.out.println("Start!");
-		List<User> users = new ArrayList<User>();
-		Random r = new Random();
-		for (int i = 0; i < n; i++) {
-			User user = new User();
-			user.setBdate(new Date());
-			user.setCity("City" + r.nextInt(1000));
-			user.setName("Name" + i + UUID.randomUUID().toString());
-			users.add(user);
-
-			// neo4jUserDao.saveUser(user);
-			mongoUserDao.saveUser(user);
-
-			try {
-				Thread.sleep(1l);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		try {
-			Thread.sleep(10000l);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		for (int i = 0; i < n * 2; i++) {
-			int firstUserIndex = r.nextInt(n - 2);
-			int secondUserIndex = r.nextInt(n - 2);
-			User user1 = users.get(firstUserIndex);
-			User user2 = users.get(secondUserIndex);
-			neo4jUserDao.addFriendshipRequestedRelation(user1.getName(), user2.getName());
-			neo4jUserDao.acceptInvitation(user2.getName(), user1.getName());
-
-		}
-
-		for (int i = 0; i < n * 5; i++) {
-			int nnn = r.nextInt(n - 2);
-
-			User user1 = users.get(nnn);
-
-			Message msg = new Message();
-			msg.setDate(new Date());
-			msg.setMessage(UUID.randomUUID().toString());
-
-			mongoUserDao.postMessage(user1.getName(), msg);
-		}
-	}
-
+	private MongoUserDao mongoUserDao;
+	@Autowired
+	@Qualifier("messageResourceConverter")
+	private Converter<MessageResource, Message> messageResourceConverter;
+	@Autowired
+	@Qualifier("userResourceConverter")
+	private Converter<UserResource, User> userResourceConverter;
+	@Autowired
+	@Qualifier("messageConverter")
+	private Converter<Message, MessageResource> messageConverter;
+	@Autowired
+	@Qualifier("userConverter")
+	private Converter<User, UserResource> userConverter;
 	public void save(Exchange exchange) {
-		User user = exchange.getIn().getBody(User.class);
-		// neo4jUserDao.saveUser(user);
-		mongoUserDao.saveUser(user);
+		UserResource user = exchange.getIn().getBody(UserResource.class);
+		mongoUserDao.saveUser(userResourceConverter.convert(user));
+	}
+	
+	public void delete(Exchange exchange) {
+		String user = getFieldFromExchangeHeader(exchange, "username");
+		mongoUserDao.removeUser(user);
 	}
 
 	public String getFieldFromExchangeHeader(Exchange exchange, String field) {
@@ -115,8 +83,32 @@ public class UserService {
 		return neo4jUserDao.getNearestNodes(getFieldFromExchangeHeader(exchange, "username"));
 	}
 
-	public List<Message> getAllFriendMessages(Exchange exchange) {
-		return mongoUserDao.getUserMessages(exploreUsers(exchange));
+	public List<MessageResource> getAllFriendMessages(Exchange exchange) {
+		List<MessageResource> mrList = new ArrayList<MessageResource>();
+		List<Message> mList = mongoUserDao.getUserMessages(exploreUsers(exchange));
+		if(mList!=null)
+		{
+			for(Message message : mList)
+			{
+				mrList.add(messageConverter.convert(message));
+			}
+		}
+
+		return mrList;
+	}
+
+	public List<MessageResource> getAllNetworkMessages(Exchange exchange) {
+		List<MessageResource> mrList = new ArrayList<MessageResource>();
+		List<Message> mList = mongoUserDao.getUserMessages(exploreNetwork(exchange));
+		if(mList!=null)
+		{
+			for(Message message : mList)
+			{
+				mrList.add(messageConverter.convert(message));
+			}
+		}
+
+		return mrList;
 	}
 
 	public List<String> exploreNetwork(Exchange exchange) {
@@ -124,11 +116,11 @@ public class UserService {
 	}
 
 	public void removeFriend(Exchange exchange) {
-		List<Integer> responseCodes = neo4jUserDao.removeFriendRelation(getFieldFromExchangeHeader(exchange, "username"),
+		List<Integer> responseCodes = neo4jUserDao.removeFriendRelation(
+				getFieldFromExchangeHeader(exchange, "username"),
 				getFieldFromExchangeHeader(exchange, "friendToRemove"));
 		if (responseCodes == null || responseCodes.size() != 2) {
-			throw new BusinessException(
-					"RemoveUser operation failed");
+			throw new BusinessException("RemoveUser operation failed");
 		}
 	}
 
@@ -150,10 +142,16 @@ public class UserService {
 		mongoUserDao.postMessage(getFieldFromExchangeHeader(exchange, "username"), msg);
 	}
 
-	public List<User> getUsers(Exchange exchange) {
+	public List<UserResource> getUsers(Exchange exchange) {
 		@SuppressWarnings("unchecked")
 		List<String> usernameList = ((List<String>) exchange.getIn().getBody());
-		return mongoUserDao.getUsers(usernameList);
+		 List<User> userList = mongoUserDao.getUsers(usernameList);
+		 List<UserResource> userResourceList = new ArrayList<UserResource>();
+		 for(User user : userList)
+		 {
+			 userResourceList.add(userConverter.convert(user));
+		 }
+		return userResourceList;
 	}
 
 	public List<User> filterUsers(Exchange exchange) throws ParseException {
@@ -164,4 +162,8 @@ public class UserService {
 
 		return mongoUserDao.find(name, bdateRangeFloor, bdateRangeCeiling, city);
 	}
+	
+	 public Long userCount() {
+		  return neo4jUserDao.userCount();
+		 }
 }

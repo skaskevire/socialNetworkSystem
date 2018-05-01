@@ -4,7 +4,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
-import sns.dao.entity.User;
+import sns.resource.rest.entity.UserResource;
 
 
 @Component
@@ -15,12 +15,16 @@ public class UserRouter extends RouteBuilder{
 		.component("servlet")
 		.contextPath("/")
 		.bindingMode(RestBindingMode.json);
-	onException(Exception.class).handled(true).to("bean:exceptionProcessor");
+	onException(Exception.class)
+		.handled(true)
+		.to("bean:exceptionProcessor");
 	rest("/users")
-		.post("/add").type(User.class).outType(String.class)
+		.post("/add").type(UserResource.class)
 			.to("direct:addUser")
 		.get("/find").to("direct:findUser")
-		.get("/generate/{numberOfUsers}").to("bean:userService?method=generateUsersAndRelations");
+		.get("/count").to("bean:userService?method=userCount")
+		.delete("/delete/{username}")
+			.to("bean:userService?method=delete");
 	rest("/users/{username}/friends")
 		.post("/add/{targetUser}")//
 			.to("direct:addToFriends")
@@ -32,13 +36,19 @@ public class UserRouter extends RouteBuilder{
 		.get("/get").to("bean:userService?method=getInvitations")
 		.post("/accept/{requestor}").to("direct:acceptInvitation");
 	rest("/users/{username}/friends/explore")
-		.get("/users").to("bean:userService?method=exploreUsers")
-		.get("/network").to("bean:userService?method=exploreNetwork");	
+		.get("/users").to("direct:returnFriendUsers")
+		.get("/network").to("direct:returnNetworkUsers");
 	rest("/users/{username}/messages")
 		.post("/post").to("direct:update")
 		.get("/friends").to("direct:retrieveSpecifyingUserData")
 		.get("/network").to("direct:retrieveSpecifyingNetworkUserData");
-	
+
+	from("direct:returnNetworkUsers")
+		.to("bean:userService?method=exploreNetwork")
+		.to("bean:userService?method=getUsers");
+	from("direct:returnFriendUsers")
+		.to("bean:userService?method=exploreUsers")
+		.to("bean:userService?method=getUsers");
 	from("direct:addToFriends")
 		.to("bean:userService?method=addToFriends")
 		.to("direct:emptyResponse");	
@@ -58,13 +68,8 @@ public class UserRouter extends RouteBuilder{
 		.to("direct:emptyResponse");	
 	from("direct:retrieveSpecifyingUserData")
 		.to("bean:userService?method=getAllFriendMessages");
-
 	from("direct:retrieveSpecifyingNetworkUserData")
-		.to("bean:userService?method=exploreNetwork")
-		.to("bean:userService?method=getUsers")
-		.to("bean:userMessageAggregator");	
-	from("direct:emptyResponse").setBody().constant("");
-	
-	
+		.to("bean:userService?method=getAllNetworkMessages");
+	from("direct:emptyResponse").setBody().constant("");	
 	}
 }
