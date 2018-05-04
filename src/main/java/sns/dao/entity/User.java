@@ -14,6 +14,15 @@ public class User {
 	private String name;
 	private Date bdate;
 	private String city;
+	private String status;
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
 	public String getName() {
 		return name;

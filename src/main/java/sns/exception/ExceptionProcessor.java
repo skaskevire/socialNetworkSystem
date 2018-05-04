@@ -33,7 +33,7 @@ public class ExceptionProcessor implements Processor {
 			response = new HttpFailureResponse(CODE_UNKNOWN_EX, "Unknown error", null, FailureType.Technical);
 			LOGGER.error("Unknown error");
 		}
-		
+
 		arg0.getOut().setBody(response);
 	}
 

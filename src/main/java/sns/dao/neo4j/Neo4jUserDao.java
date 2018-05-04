@@ -54,4 +54,15 @@ public class Neo4jUserDao {
 	{
 		return repository.userCount();
 	}
+	
+	public Boolean userExists(String username)
+	{
+		Boolean result = false;
+		if(repository.getUserID(username)!=null)
+		{
+			result = true;
+		}
+		
+		return result;
+	}
 }

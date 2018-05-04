@@ -1,0 +1,3 @@
+sns\entity\Message.class
+sns\entity\User.class
+sns\UserOperationsTest.class

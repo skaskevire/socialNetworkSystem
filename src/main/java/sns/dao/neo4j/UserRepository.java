@@ -37,4 +37,7 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
 	public int distanceFactor(@Param("username") String username, @Param("targetuser") String targetuser);
 	@Query("MATCH (n:user) RETURN COUNT(n)")
 	public long userCount();
+	
+	@Query("MATCH (u:user) WHERE u.name = {username} RETURN u._id")
+	public String getUserID(@Param("username")String username);
 }

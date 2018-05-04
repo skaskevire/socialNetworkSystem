@@ -10,10 +10,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import sns.dao.entity.Message;
 import sns.dao.entity.User;
+import sns.dao.entity.UserStatusEnum;
 
 @Component
 public class MongoUserDao {
@@ -119,5 +121,14 @@ public class MongoUserDao {
 	{
 		  Query query = new Query();   
 		  return mongoOperations.count(query, User.class);
+	}
+	
+	public void setUserStatusCreated(String username) {
+		Update update = new Update();
+		update.set("status", UserStatusEnum.created.name());
+		Query q = new Query();
+
+		mongoOperations
+			.updateFirst(q.addCriteria(Criteria.where("name").is(username)), update, User.class);
 	}
 }

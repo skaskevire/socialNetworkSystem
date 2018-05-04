@@ -4,6 +4,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
+import sns.exception.NotYetCreatedException;
 import sns.resource.rest.entity.UserResource;
 
 
@@ -15,9 +16,14 @@ public class UserRouter extends RouteBuilder{
 		.component("servlet")
 		.contextPath("/")
 		.bindingMode(RestBindingMode.json);
+
+	onException(NotYetCreatedException.class)
+    	.maximumRedeliveries(-1)
+    	.redeliveryDelay(60000);
 	onException(Exception.class)
 		.handled(true)
 		.to("bean:exceptionProcessor");
+	
 	rest("/users")
 		.post("/add").type(UserResource.class)
 			.to("direct:addUser")
@@ -57,7 +63,8 @@ public class UserRouter extends RouteBuilder{
 		.to("direct:emptyResponse");
 	from("direct:addUser")
 		.to("bean:userService?method=save")
-		.to("direct:emptyResponse");
+		.to("actsivemq:queue:use2queue?exchangePattern=InOnly")
+		.to("direct:emptyResponse");	
 	from("direct:findUser")
 		.to("bean:userService?method=filterUsers")
 		.to("mock:endFind");
@@ -71,5 +78,7 @@ public class UserRouter extends RouteBuilder{
 	from("direct:retrieveSpecifyingNetworkUserData")
 		.to("bean:userService?method=getAllNetworkMessages");
 	from("direct:emptyResponse").setBody().constant("");	
+	from("actsivemq:queue:use2queue")
+		.to("bean:userService?method=endUserCreation");
 	}
 }
