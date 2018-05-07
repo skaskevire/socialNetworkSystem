@@ -4,7 +4,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
-import sns.exception.NotYetCreatedException;
+import sns.exception.NeededRetryException;
 import sns.resource.rest.entity.UserResource;
 
 
@@ -16,7 +16,7 @@ public class UserRouter extends RouteBuilder{
 		.component("servlet")
 		.contextPath("/")
 		.bindingMode(RestBindingMode.json);
-	onException(NotYetCreatedException.class)
+	onException(NeededRetryException.class)
 		.handled(false);
 	onException(Exception.class)
 		.handled(true)
@@ -28,7 +28,8 @@ public class UserRouter extends RouteBuilder{
 		.get("/find").to("direct:findUser")
 		.get("/count").to("bean:userService?method=userCount")
 		.delete("/delete/{username}")
-			.to("bean:userService?method=delete");
+			.to("direct:deleteUser");
+			
 	rest("/users/{username}/friends")
 		.post("/add/{targetUser}")//
 			.to("direct:addToFriends")
@@ -47,6 +48,10 @@ public class UserRouter extends RouteBuilder{
 		.get("/friends").to("direct:retrieveSpecifyingUserData")
 		.get("/network").to("direct:retrieveSpecifyingNetworkUserData");
 
+	from("direct:deleteUser")
+		.to("bean:userService?method=markAsDeleted")
+		.to("actsivemq:queue:user-mongo-delete-queue?exchangePattern=InOnly")
+		.to("direct:emptyResponse");
 	from("direct:returnNetworkUsers")
 		.to("bean:userService?method=exploreNetwork")
 		.to("bean:userService?method=getUsers");
@@ -82,5 +87,18 @@ public class UserRouter extends RouteBuilder{
 				.maximumRedeliveries(-1)
 				.redeliveryDelay(1000l))
 		.to("bean:userService?method=endUserCreation");
+	from("actsivemq:queue:user-mongo-delete-queue")
+		.errorHandler(			
+				defaultErrorHandler()
+					.maximumRedeliveries(-1)
+					.redeliveryDelay(1000l))
+		.to("bean:userService?method=deleteFromMongo")
+		.to("actsivemq:queue:user-neo4j-delete-queue?exchangePattern=InOnly");
+	from("actsivemq:queue:user-neo4j-delete-queue")
+		.errorHandler(			
+				defaultErrorHandler()
+					.maximumRedeliveries(-1)
+					.redeliveryDelay(1000l))
+		.to("bean:userService?method=deleteFromNeo4j");
 	}
 }

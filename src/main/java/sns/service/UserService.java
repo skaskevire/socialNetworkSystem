@@ -22,7 +22,7 @@ import sns.dao.mongo.MongoUserDao;
 import sns.dao.neo4j.Neo4jUserDao;
 import sns.exception.BusinessException;
 import sns.exception.ExceptionProcessor;
-import sns.exception.NotYetCreatedException;
+import sns.exception.NeededRetryException;
 import sns.resource.rest.entity.MessageResource;
 import sns.resource.rest.entity.UserResource;
 
@@ -53,13 +53,38 @@ public class UserService {
 		mongoUserDao.saveUser(user);
 		exchange.getOut().setBody(user.getName());
 	}
-
-	public void delete(Exchange exchange) {
+	
+	public void markAsDeleted(Exchange exchange) {
 		String user = getFieldFromExchangeHeader(exchange, "username");
-
 		validateUser(user);
+		exchange.getOut().setBody(user);
+		mongoUserDao.setUserStatusPendingRemoval(user);
+	}
 
-		mongoUserDao.removeUser(user);
+	public void deleteFromMongo(Exchange exchange) {	
+		try {
+			String user = exchange.getIn().getBody(String.class);
+			mongoUserDao.removeUser(user);
+			exchange.getOut().setBody(user);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage() + " Retrying...", e);
+			throw new NeededRetryException(e.getMessage() + " Retrying...", e);
+		}
+	}
+	
+	public void deleteFromNeo4j(Exchange exchange) {
+		try {
+			String user = exchange.getIn().getBody(String.class);
+			Integer response = neo4jUserDao.deleteUser(user);
+			if (response == null) {
+				throw new NeededRetryException(
+						"User " + user + "not yet removed from Neo4j. Invalid response from DB");
+			}
+			exchange.getOut().setBody(user);
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage() + " Retrying...", e);
+			throw new NeededRetryException(e.getMessage() + " Retrying...", e);
+		}
 	}
 
 	public String getFieldFromExchangeHeader(Exchange exchange, String field) {
@@ -108,10 +133,13 @@ public class UserService {
 	private void validateUser(String username) {
 		User user = mongoUserDao.getUser(username);
 		if (user == null) {
-			throw new BusinessException("User " + username + "is not exists!");
+			throw new BusinessException("User " + username + " is not exists!");
 		}
-		if (!UserStatusEnum.created.name().equals(user.getStatus())) {
-			throw new BusinessException("User " + username + "not yet created, try later");
+		if (UserStatusEnum.pendingCreation.name().equals(user.getStatus())) {
+			throw new BusinessException("User " + username + " not yet created, try later");
+		}
+		if (UserStatusEnum.pendingRemoval.name().equals(user.getStatus())) {
+			throw new BusinessException("User " + username + " is removing now.");
 		}
 	}
 
@@ -219,12 +247,19 @@ public class UserService {
 
 	public void endUserCreation(Exchange exchange) {
 		String username = exchange.getIn().getBody(String.class);
-		if (neo4jUserDao.userExists(username)) {
+		
+		try
+		{
+			String id = neo4jUserDao.saveUser(username);
+			if(id == null)
+			{
+				throw new NeededRetryException("User " + username + "not yet saved to Neo4j. Returned ID is null");
+			}
 			mongoUserDao.setUserStatusCreated(username);
-			System.out.println("");
-		} else {
-			LOGGER.error("User " + username + "not yet saved to Neo4j. Retrying...");
-			throw new NotYetCreatedException("User " + username + "not yet saved to Neo4j. Retrying...");
+		} catch (Exception e)
+		{
+			LOGGER.error(e.getMessage() + " Retrying...", e);
+			throw new NeededRetryException(e.getMessage() + " Retrying...", e);
 		}
 	}
 }

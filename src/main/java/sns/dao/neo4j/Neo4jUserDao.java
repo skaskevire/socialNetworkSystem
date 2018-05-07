@@ -12,8 +12,8 @@ public class Neo4jUserDao {
 	@Autowired
 	UserRepository repository;
 
-	public void saveUser(User user) {
-		repository.createOrUpdate(user.getName());
+	public String saveUser(String username) {
+		return repository.createOrUpdate(username);
 	}
 
 	public Integer addFriendshipRequestedRelation(String sourceUser, String targetUser) {
@@ -64,5 +64,10 @@ public class Neo4jUserDao {
 		}
 		
 		return result;
+	}
+	
+	public Integer deleteUser(String username)
+	{
+		return repository.deleteUser(username);
 	}
 }

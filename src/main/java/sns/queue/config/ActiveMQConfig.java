@@ -19,7 +19,6 @@ import org.springframework.jms.connection.JmsTransactionManager;
 public class ActiveMQConfig {
 
 	public static final String DEFAULT_BROKER_URL = "tcp://localhost:61616";
-	public static final String COMMENT_QUEUE = "user-queue";
 
 	@Bean
 	public BrokerService createBrokerService() throws Exception {
@@ -46,7 +45,6 @@ public class ActiveMQConfig {
 	public RedeliveryPolicy redeliveryPolicy() {
 		RedeliveryPolicy rp = new RedeliveryPolicy();
 		rp.setMaximumRedeliveries(0);
-		rp.setQueue(COMMENT_QUEUE);
 		rp.setUseExponentialBackOff(false);
 		return rp;
 	}

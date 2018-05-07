@@ -19,8 +19,8 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
 			+ "CREATE (a)-[r2:FRIEND]->(b) CREATE (a)<-[r3:FRIEND]-(b)" + "  SET r2 = r WITH r delete r RETURN 0")
 	public Integer acceptFrienship(@Param("acceptor") String acceptor, @Param("requestor") String requestor);
 
-	@Query("MERGE (n:user { name: {username}})")
-	public void createOrUpdate(@Param("username") String username);
+	@Query("MERGE (n:user { name: {username}}) RETURN ID(n)")
+	public String createOrUpdate(@Param("username") String username);
 
 	@Query("MATCH (u:user { name: {username} })-[:FRIEND]->(x) RETURN x.name")
 	public List<String> getNearestNodes(@Param("username") String username);
@@ -40,4 +40,7 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
 	
 	@Query("MATCH (u:user) WHERE u.name = {username} RETURN u._id")
 	public String getUserID(@Param("username")String username);
+	
+	@Query("MATCH (u:user) WHERE u.name = {username} DELETE u RETURN 0")
+	public Integer deleteUser(@Param("username") String username);
 }

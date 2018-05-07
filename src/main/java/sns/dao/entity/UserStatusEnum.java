@@ -1,5 +1,5 @@
 package sns.dao.entity;
 
 public enum UserStatusEnum {
-	pendingCreation, created
+	pendingCreation, created, pendingRemoval
 }

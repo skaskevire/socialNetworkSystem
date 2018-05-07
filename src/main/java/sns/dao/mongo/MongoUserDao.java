@@ -8,7 +8,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -25,7 +24,15 @@ public class MongoUserDao {
 	
 	public void saveUser(User user)
 	{
-		mongoOperations.save(user);
+		Query query = new Query();
+		query.addCriteria(Criteria.where("name").is(user.getName()));
+		
+		Update update = new Update();
+		update.set("status", user.getStatus());
+		update.set("bdate", user.getBdate());
+		update.set("city", user.getCity());
+		update.set("name", user.getName());
+		mongoOperations.upsert(query, update, User.class);
 	}
 	
 	public void removeUser(String username)
@@ -33,8 +40,8 @@ public class MongoUserDao {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("name").is(username));
 		mongoOperations.remove(query, User.class);
-	}	
-	
+	}
+
 	public void postMessage(String username, Message message)
 	{
 		message.setUser(username);
@@ -127,6 +134,14 @@ public class MongoUserDao {
 	public void setUserStatusCreated(String username) {
 		Update update = new Update();
 		update.set("status", UserStatusEnum.created.name());
+		Query q = new Query();
+		
+		mongoOperations.updateFirst(q.addCriteria(Criteria.where("name").is(username)), update, User.class);
+	}
+	
+	public void setUserStatusPendingRemoval(String username) {
+		Update update = new Update();
+		update.set("status", UserStatusEnum.pendingRemoval.name());
 		Query q = new Query();
 		
 		mongoOperations.updateFirst(q.addCriteria(Criteria.where("name").is(username)), update, User.class);
