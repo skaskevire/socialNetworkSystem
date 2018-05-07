@@ -13,28 +13,22 @@ public class ExceptionProcessor implements Processor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionProcessor.class);
 	private static final int CODE_TECHNICAL_EX = 2000;
 	private static final int CODE_BUSINESS_EX = 1000;
-	private static final int CODE_UNKNOWN_EX = 2000;
-
 	@Override
 	public void process(Exchange arg0) throws Exception {
 		HttpFailureResponse response = null;
 		Exception exception = (Exception) arg0.getProperties().get("CamelExceptionCaught");
-		if (exception != null) {
+
 			if (exception instanceof BusinessException) {
 				BusinessException be = (BusinessException) exception;
 				response = new HttpFailureResponse(CODE_BUSINESS_EX, be.getMessage(), be.getClass().toString(),
 						FailureType.Business);
+				LOGGER.error(exception.getMessage(), exception);
 			} else {
 				response = new HttpFailureResponse(CODE_TECHNICAL_EX, exception.getMessage(),
 						exception.getClass().toString(), FailureType.Technical);
 			}
-			LOGGER.error(exception.getMessage(), exception);
-		} else {
-			response = new HttpFailureResponse(CODE_UNKNOWN_EX, "Unknown error", null, FailureType.Technical);
-			LOGGER.error("Unknown error");
-		}
 
-		arg0.getOut().setBody(response);
+			arg0.getOut().setBody(response);
 	}
 
 }

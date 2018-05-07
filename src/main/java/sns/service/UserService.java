@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.camel.Exchange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -19,12 +21,14 @@ import sns.dao.entity.UserStatusEnum;
 import sns.dao.mongo.MongoUserDao;
 import sns.dao.neo4j.Neo4jUserDao;
 import sns.exception.BusinessException;
+import sns.exception.ExceptionProcessor;
 import sns.exception.NotYetCreatedException;
 import sns.resource.rest.entity.MessageResource;
 import sns.resource.rest.entity.UserResource;
 
 @Component
 public class UserService {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 	@Autowired
 	private Neo4jUserDao neo4jUserDao;
 	@Autowired
@@ -214,6 +218,13 @@ public class UserService {
 	}
 
 	public void endUserCreation(Exchange exchange) {
-		throw new NotYetCreatedException("User not exists");
+		String username = exchange.getIn().getBody(String.class);
+		if (neo4jUserDao.userExists(username)) {
+			mongoUserDao.setUserStatusCreated(username);
+			System.out.println("");
+		} else {
+			LOGGER.error("User " + username + "not yet saved to Neo4j. Retrying...");
+			throw new NotYetCreatedException("User " + username + "not yet saved to Neo4j. Retrying...");
+		}
 	}
 }

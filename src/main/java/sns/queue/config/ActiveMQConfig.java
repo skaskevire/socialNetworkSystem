@@ -3,26 +3,23 @@ package sns.queue.config;
 import java.net.URI;
 import java.util.Arrays;
 
-import javax.jms.Session;
-
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.RedeliveryPolicy;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.broker.TransportConnector;
 import org.apache.activemq.camel.component.ActiveMQComponent;
-import org.apache.camel.component.jms.JmsComponent;
 import org.apache.camel.component.jms.JmsConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.connection.JmsTransactionManager;
 
 @EnableJms
 @Configuration
 public class ActiveMQConfig {
 
 	public static final String DEFAULT_BROKER_URL = "tcp://localhost:61616";
-	public static final String COMMENT_QUEUE = "use2queue";
+	public static final String COMMENT_QUEUE = "user-queue";
 
 	@Bean
 	public BrokerService createBrokerService() throws Exception {
@@ -37,54 +34,46 @@ public class ActiveMQConfig {
 	}
 
 	@Bean
-	public ActiveMQConnectionFactory connectionFactory() {
+	public ActiveMQConnectionFactory connectionFactory(RedeliveryPolicy redeliveryPolicy) {
 		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
 		connectionFactory.setBrokerURL(DEFAULT_BROKER_URL);
-		connectionFactory.setTrustedPackages(Arrays.asList("sns.resource.rest.entity","java.util"));
-		//connectionFactory.setRedeliveryPolicy(redeliveryPolicy());
-
+		connectionFactory.setTrustedPackages(Arrays.asList("sns.resource.rest.entity", "java.util"));
+		connectionFactory.setRedeliveryPolicy(redeliveryPolicy);
 		return connectionFactory;
 	}
 
-	/*@Bean
-	public RedeliveryPolicy redeliveryPolicy()
-	{
+	@Bean
+	public RedeliveryPolicy redeliveryPolicy() {
 		RedeliveryPolicy rp = new RedeliveryPolicy();
-		rp.setRedeliveryDelay(5l);
-		rp.setMaximumRedeliveries(-1);
+		rp.setMaximumRedeliveries(0);
 		rp.setQueue(COMMENT_QUEUE);
 		rp.setUseExponentialBackOff(false);
-
 		return rp;
-	}*/
-	//@Bean
-	//public JmsComponent userqueue()
-	//{
-	//	return JmsComponent.jmsComponentAutoAcknowledge(connectionFactory());
-	//}
-	@Bean
-	public JmsTemplate jmsTemplate() {
-		JmsTemplate template = new JmsTemplate();
-		template.setConnectionFactory(connectionFactory());
-		template.setDefaultDestinationName(COMMENT_QUEUE);
-		template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-		
-		return template;
 	}
 
 	@Bean
-	public JmsConfiguration jmsConfig() {
-		JmsConfiguration jc = new JmsConfiguration();
-		jc.setConnectionFactory(connectionFactory());
-		jc.setConcurrentConsumers(14);
-		return jc;
+	public JmsConfiguration jmsConfig(ActiveMQConnectionFactory connectionFactory,
+			JmsTransactionManager jmsTransactionManager) {
+		JmsConfiguration jmsConfig = new JmsConfiguration();
+		jmsConfig.setConnectionFactory(connectionFactory);
+		jmsConfig.setConcurrentConsumers(14);
+		jmsConfig.setAsyncConsumer(true);
+		jmsConfig.setTransactionManager(jmsTransactionManager);
+
+		return jmsConfig;
 	}
 
 	@Bean
-	public ActiveMQComponent actsivemq() {
+	public JmsTransactionManager jmsTransactionManager(ActiveMQConnectionFactory connectionFactory) {
+		JmsTransactionManager jmsTransactionManager = new JmsTransactionManager();
+		jmsTransactionManager.setConnectionFactory(connectionFactory);
+		return jmsTransactionManager;
+	}
+
+	@Bean
+	public ActiveMQComponent actsivemq(JmsConfiguration jmsConfig) {
 		ActiveMQComponent amqc = new ActiveMQComponent();
-		amqc.setConfiguration(jmsConfig());
-
+		amqc.setConfiguration(jmsConfig);
 		return amqc;
 	}
 }

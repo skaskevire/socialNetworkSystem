@@ -16,10 +16,8 @@ public class UserRouter extends RouteBuilder{
 		.component("servlet")
 		.contextPath("/")
 		.bindingMode(RestBindingMode.json);
-
 	onException(NotYetCreatedException.class)
-    	.maximumRedeliveries(-1)
-    	.redeliveryDelay(60000);
+		.handled(false);
 	onException(Exception.class)
 		.handled(true)
 		.to("bean:exceptionProcessor");
@@ -63,7 +61,7 @@ public class UserRouter extends RouteBuilder{
 		.to("direct:emptyResponse");
 	from("direct:addUser")
 		.to("bean:userService?method=save")
-		.to("actsivemq:queue:use2queue?exchangePattern=InOnly")
+		.to("actsivemq:queue:user-queue?exchangePattern=InOnly")
 		.to("direct:emptyResponse");	
 	from("direct:findUser")
 		.to("bean:userService?method=filterUsers")
@@ -78,7 +76,11 @@ public class UserRouter extends RouteBuilder{
 	from("direct:retrieveSpecifyingNetworkUserData")
 		.to("bean:userService?method=getAllNetworkMessages");
 	from("direct:emptyResponse").setBody().constant("");	
-	from("actsivemq:queue:use2queue")
+	from("actsivemq:queue:user-queue")
+		.errorHandler(			
+			defaultErrorHandler()
+				.maximumRedeliveries(-1)
+				.redeliveryDelay(1000l))
 		.to("bean:userService?method=endUserCreation");
 	}
 }

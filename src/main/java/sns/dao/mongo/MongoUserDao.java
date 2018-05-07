@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -127,8 +128,7 @@ public class MongoUserDao {
 		Update update = new Update();
 		update.set("status", UserStatusEnum.created.name());
 		Query q = new Query();
-
-		mongoOperations
-			.updateFirst(q.addCriteria(Criteria.where("name").is(username)), update, User.class);
+		
+		mongoOperations.updateFirst(q.addCriteria(Criteria.where("name").is(username)), update, User.class);
 	}
 }

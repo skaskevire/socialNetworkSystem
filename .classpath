@@ -77,6 +77,8 @@
   <classpathentry kind="var" path="M2_REPO/org/springframework/data/spring-data-mongodb/1.10.11.RELEASE/spring-data-mongodb-1.10.11.RELEASE.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/springframework/data/spring-data-commons/1.13.11.RELEASE/spring-data-commons-1.13.11.RELEASE.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/3.4.3/mongo-java-driver-3.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/springframework/data/spring-data-mongodb-log4j/1.10.11.RELEASE/spring-data-mongodb-log4j-1.10.11.RELEASE.jar"/>
+  <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.16/log4j-1.2.16.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/camel/camel-servlet-starter/2.21.0/camel-servlet-starter-2.21.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/camel/camel-servlet/2.21.0/camel-servlet-2.21.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/camel/camel-http-common/2.21.0/camel-http-common-2.21.0.jar"/>

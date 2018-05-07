@@ -24,19 +24,19 @@ import sns.Application;
 import sns.entity.Message;
 import sns.entity.User;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = Application.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+//@RunWith(SpringRunner.class)
+//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = Application.class)
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class UserOperationsTest {
 	@Autowired
 	private TestRestTemplate restTemplate;
 	private List<User> users;
 
-	@PostConstruct
+	//@PostConstruct
 	public void init() {
 		Integer intitialUserStorageSize = restTemplate.getForEntity("/camel/users/count", Integer.class).getBody();
 
-		Integer n = 5000;
+		Integer n = 1000;
 		System.out.println("Start!");
 		users = new ArrayList<User>();
 		Random r = new Random();
@@ -50,7 +50,7 @@ public class UserOperationsTest {
 			Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 		}
 
-		/*while (true) {
+		while (true) {
 			Integer currentUserStorageSize = restTemplate.getForEntity("/camel/users/count", Integer.class).getBody();
 			System.out.println(intitialUserStorageSize);
 			System.out.println(currentUserStorageSize);
@@ -85,18 +85,17 @@ public class UserOperationsTest {
 			restTemplate.postForEntity("/camel/users/" + user1.getName() + "/messages/post", new Message("msg"),
 					String.class);
 
-		}*/
+		}
 	}
 
 	@Test
 	public void testUserOperationsPerformance() {
-		/*int tolerance = 5000;
-		for (User u : users) {
-			testGetUserFriends(u, tolerance);
-			testGetUserFriendsMessages(u, tolerance);
-			testFindUserByNameAndCity(u, tolerance);
-		}
-		cleanup();*/
+		////int tolerance = 5000;
+		///for (User u : users) {
+	//		testGetUserFriends(u, tolerance);
+		///	testGetUserFriendsMessages(u, tolerance);
+	//	/	testFindUserByNameAndCity(u, tolerance);
+	///	cleanup();
 	}
 
 	private void testGetUserFriends(User u, long tolerance) {

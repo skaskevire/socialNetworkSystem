@@ -1,4 +1,3 @@
-sns\resource\rest\UserRouter$1.class
 sns\converter\UserConverter.class
 sns\dao\entity\Message.class
 sns\resource\rest\entity\MessageResource.class
@@ -6,16 +5,21 @@ sns\Application.class
 sns\resource\rest\UserRouter.class
 sns\resource\rest\DateDeserializer.class
 sns\queue\config\ActiveMQConfig.class
+sns\dao\neo4j\UserMongoRepository.class
 sns\converter\Converter.class
+sns\dao\mongo\MongoUserDao$1.class
 sns\exception\BusinessException.class
 sns\resource\rest\entity\UserResource.class
 sns\converter\MessageConverter.class
 sns\exception\HttpFailureResponse$FailureType.class
+sns\dao\entity\UserStatusEnum.class
+sns\exception\NotYetCreatedException.class
 sns\service\UserService.class
 sns\dao\mongo\MongoUserDao.class
 sns\dao\neo4j\UserRepository.class
 sns\exception\ExceptionProcessor.class
 sns\exception\HttpFailureResponse.class
+sns\dao\config\MongoDBConfig.class
 sns\dao\entity\User.class
 sns\dao\neo4j\Neo4jUserDao.class
 sns\converter\MessageResourceConverter.class
