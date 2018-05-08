@@ -1,12 +1,16 @@
 package sns.service;
 
+import java.net.URL;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 import org.apache.camel.Exchange;
+import org.ehcache.Cache;
+import org.ehcache.CacheManager;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.xml.XmlConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import org.springframework.stereotype.Component;
 
+import sns.cache.entity.DistanceFactorCalculationRequest;
 import sns.converter.Converter;
 import sns.dao.entity.Message;
 import sns.dao.entity.User;
@@ -46,6 +51,8 @@ public class UserService {
 	@Qualifier("userConverter")
 	private Converter<User, UserResource> userConverter;
 
+	@Autowired
+	private Cache<String, DistanceFactorCalculationRequest> distanceFactorCalculationRequestsCache;
 	public void save(Exchange exchange) {
 		UserResource userResource = exchange.getIn().getBody(UserResource.class);
 		User user = userResourceConverter.convert(userResource);
@@ -53,7 +60,7 @@ public class UserService {
 		mongoUserDao.saveUser(user);
 		exchange.getOut().setBody(user.getName());
 	}
-	
+
 	public void markAsDeleted(Exchange exchange) {
 		String user = getFieldFromExchangeHeader(exchange, "username");
 		validateUser(user);
@@ -61,7 +68,7 @@ public class UserService {
 		mongoUserDao.setUserStatusPendingRemoval(user);
 	}
 
-	public void deleteFromMongo(Exchange exchange) {	
+	public void deleteFromMongo(Exchange exchange) {
 		try {
 			String user = exchange.getIn().getBody(String.class);
 			mongoUserDao.removeUser(user);
@@ -71,7 +78,7 @@ public class UserService {
 			throw new NeededRetryException(e.getMessage() + " Retrying...", e);
 		}
 	}
-	
+
 	public void deleteFromNeo4j(Exchange exchange) {
 		try {
 			String user = exchange.getIn().getBody(String.class);
@@ -194,19 +201,47 @@ public class UserService {
 		}
 	}
 
-	public int distanceFactor(Exchange exchange) {
-		String username = getFieldFromExchangeHeader(exchange, "username");
-		String targetUser = getFieldFromExchangeHeader(exchange, "targetUser");
+	public void distanceFactor(Exchange exchange) {
+		String requestID = exchange.getIn().getBody(String.class);
+		DistanceFactorCalculationRequest dfcr = distanceFactorCalculationRequestsCache.get(requestID);
 
-		validateUser(username);
-		validateUser(targetUser);
-
-		Integer distanceFactor = neo4jUserDao.distanceFactor(username, targetUser);
+		Integer distanceFactor = neo4jUserDao.distanceFactor(dfcr.getSourceUser(), dfcr.getTargetUser());
 		if (distanceFactor == null) {
 			throw new BusinessException("DistanceFactor operation failed: sourceUser or targetUser name incorrect");
 		}
 
-		return distanceFactor;
+		dfcr.setStatus("calculationCompleted");
+		dfcr.setDistanceFactor(distanceFactor);
+	}
+
+	public void returnDistanceFactor(Exchange exchange)
+	{
+		String requestID = getFieldFromExchangeHeader(exchange, "requestID");
+
+		DistanceFactorCalculationRequest dfcr = distanceFactorCalculationRequestsCache.get(requestID);
+		if(dfcr == null) {
+			throw new BusinessException("Calculation Request not found.");
+		} else if(!dfcr.getStatus().equals("calculationCompleted"))
+		{
+			throw new BusinessException("Calculation is in progress now. Try later.");
+		}
+
+		exchange.getOut().setBody(dfcr.getDistanceFactor());
+	}
+
+	public void createDistanceFactorCalculationRequest(Exchange exchange) {
+		String username = getFieldFromExchangeHeader(exchange, "username");
+		String targetUser = getFieldFromExchangeHeader(exchange, "targetUser");
+
+		DistanceFactorCalculationRequest dfcr = new DistanceFactorCalculationRequest();
+		dfcr.setSourceUser(username);
+		dfcr.setTargetUser(targetUser);
+		dfcr.setStatus("pending");
+
+		String requestID = UUID.randomUUID().toString();
+		distanceFactorCalculationRequestsCache.put(requestID, dfcr);
+
+		exchange.getOut().setBody(requestID);
 	}
 
 	public void postMessage(Exchange exchange) {
@@ -247,7 +282,6 @@ public class UserService {
 
 	public void endUserCreation(Exchange exchange) {
 		String username = exchange.getIn().getBody(String.class);
-		
 		try
 		{
 			String id = neo4jUserDao.saveUser(username);

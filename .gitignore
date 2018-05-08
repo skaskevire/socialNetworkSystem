@@ -3,8 +3,10 @@
 */.classpath
 */.project
 */target/classes
-*/activemq-data
+*/activemq-data/*
 */target/generated-sources
 */target/maven-archiver
 */target/maven-status
 */target/cxf-codegen-plugin-markers
+*/target/
+*/.idea/
