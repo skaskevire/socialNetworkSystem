@@ -1,0 +1,10 @@
+*/bin/
+*/.settings/
+*/.classpath
+*/.project
+*/target/classes
+*/activemq-data
+*/target/generated-sources
+*/target/maven-archiver
+*/target/maven-status
+*/target/cxf-codegen-plugin-markers
