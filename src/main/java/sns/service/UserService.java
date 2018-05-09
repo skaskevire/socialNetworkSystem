@@ -202,6 +202,12 @@ public class UserService {
 	}
 
 	public void distanceFactor(Exchange exchange) {
+		try {
+			Thread.sleep(10000l);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Done!");
 		String requestID = exchange.getIn().getBody(String.class);
 		DistanceFactorCalculationRequest dfcr = distanceFactorCalculationRequestsCache.get(requestID);
 

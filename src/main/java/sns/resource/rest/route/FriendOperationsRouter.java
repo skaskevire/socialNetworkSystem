@@ -24,6 +24,6 @@ public class FriendOperationsRouter extends RouteBuilder {
                 .to("direct:emptyResponse");
         from("direct:createDistanceFactorCalculationRequest")
                 .to("bean:userService?method=createDistanceFactorCalculationRequest")
-                .to("actsivemq:queue:user-distance-factor-calculation-queue?exchangePattern=InOnly");
+                .wireTap("actsivemq:queue:user-distance-factor-calculation-queue");
     }
 }

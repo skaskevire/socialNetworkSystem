@@ -1,6 +1,8 @@
 package sns.cache.entity;
 
-public class DistanceFactorCalculationRequest {
+import java.io.Serializable;
+
+public class DistanceFactorCalculationRequest implements Serializable {
     private String sourceUser;
     private String targetUser;
     private String status;
