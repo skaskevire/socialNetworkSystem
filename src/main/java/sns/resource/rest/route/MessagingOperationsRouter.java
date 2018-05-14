@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 public class MessagingOperationsRouter extends RouteBuilder {
     @Override
     public void configure() throws Exception {
-        from("direct:update").to("bean:userService?method=postMessage")
+        from("direct:update").to("direct:userService.postMessage")
                 .to("direct:emptyResponse");
         from("direct:retrieveSpecifyingUserData")
-                .to("bean:userService?method=getAllFriendMessages");
+                .to("direct:userService.getAllFriendMessages");
         from("direct:retrieveSpecifyingNetworkUserData")
-                .to("bean:userService?method=getAllNetworkMessages");
+                .to("direct:userService.getAllNetworkMessages");
     }
 }

@@ -20,21 +20,21 @@ public class QueuesRouter extends RouteBuilder {
                         defaultErrorHandler()
                                 .maximumRedeliveries(maximumRedeliveries)
                                 .redeliveryDelay(redeliveryDelay))
-                .to("bean:userService?method=endUserCreation");
+                .to("direct:userService.endUserCreation");
         from("actsivemq:queue:user-mongo-delete-queue")
                 .errorHandler(
                         defaultErrorHandler()
                                 .maximumRedeliveries(maximumRedeliveries)
                                 .redeliveryDelay(redeliveryDelay))
-                .to("bean:userService?method=deleteFromMongo")
+                .to("direct:userService.deleteFromMongo")
                 .to("actsivemq:queue:user-neo4j-delete-queue?exchangePattern=InOnly");
         from("actsivemq:queue:user-neo4j-delete-queue")
                 .errorHandler(
                         defaultErrorHandler()
                                 .maximumRedeliveries(maximumRedeliveries)
                                 .redeliveryDelay(redeliveryDelay))
-                .to("bean:userService?method=deleteFromNeo4j");
+                .to("direct:userService.deleteFromNeo4j");
         from("actsivemq:queue:user-distance-factor-calculation-queue")
-                .to("bean:userService?method=distanceFactor");
+                .to("direct:userService.distanceFactor");
     }
 }

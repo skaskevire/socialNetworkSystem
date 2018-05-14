@@ -25,7 +25,7 @@ public class RestEndpointRouter extends RouteBuilder {
                 .post("/add").type(UserResource.class)
                 .to("direct:addUser")
                 .get("/find").to("direct:findUser")
-                .get("/count").to("bean:userService?method=userCount")
+                .get("/count").to("direct:userService.userCount")
                 .delete("/delete/{username}")
                 .to("direct:deleteUser");
         rest("/users/{username}/friends")
@@ -36,10 +36,10 @@ public class RestEndpointRouter extends RouteBuilder {
                 .post("/requestDistanceFactorCalculatuion/{targetUser}")
                 .to("direct:createDistanceFactorCalculationRequest")
                 .get("/distanceFactorCalculationResult/{requestID}")
-                .to("bean:userService?method=returnDistanceFactor");
+                .to("direct:userService.returnDistanceFactor");
 
         rest("/users/{username}/friends/invitations")
-                .get("/get").to("bean:userService?method=getInvitations")
+                .get("/get").to("direct:userService.getInvitations")
                 .post("/accept/{requestor}").to("direct:acceptInvitation");
         rest("/users/{username}/friends/explore")
                 .get("/users").to("direct:returnFriendUsers")

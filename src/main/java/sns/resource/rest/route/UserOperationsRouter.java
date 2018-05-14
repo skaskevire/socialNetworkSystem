@@ -9,15 +9,15 @@ public class UserOperationsRouter extends RouteBuilder {
     @Override
     public void configure() throws Exception {
         from("direct:deleteUser")
-                .to("bean:userService?method=markAsDeleted")
+                .to("direct:userService.markAsDeleted")
                 .to("actsivemq:queue:user-mongo-delete-queue?exchangePattern=InOnly")
                 .to("direct:emptyResponse");
         from("direct:addUser")
-                .to("bean:userService?method=save")
+                .to("direct:userService.save")
                 .to("actsivemq:queue:user-queue?exchangePattern=InOnly")
                 .to("direct:emptyResponse");
         from("direct:findUser")
-                .to("bean:userService?method=filterUsers")
+                .to("direct:userService.filterUsers")
                 .to("mock:endFind");
     }
 }
